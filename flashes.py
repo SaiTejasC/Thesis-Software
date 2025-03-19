@@ -1,20 +1,10 @@
 import cv2
 import numpy as np
 
-#logic of the code:
-#prev = previous image
-#prevIluminance = get a heatmap of the illuminance of the image
-# - probabbly where you check illuminnace and measure record it
-#curr = current image
-#identify coord of the patterns in the current image
-#magic function that checks the illuminancne and compare it with prevIlluminance if theres big spots with difference of 20
-
-
 # Constants
-VIDEO_PATH = "vr_video.mp4"  # Change this to your video file
+VIDEO_PATH = "youtube_CKa2HGuCNdE_852x480_h264.mp4"  # Change this to your video file
 FLASH_THRESHOLD = 220  # Adjust as needed
 BRIGHTNESS_DIFF_THRESHOLD = 50  # Adjust sensitivity
-MIN_INTERVAL_WIDTH = 0.5  # Minimum interval width in seconds
 
 # Initialize variables
 prev_brightness = None
@@ -39,9 +29,7 @@ def detect_flash(frame, timestamp):
             else:
                 current_interval[1] = timestamp
         elif current_interval is not None:
-            # Ensure minimum interval width
-            if current_interval[1] - current_interval[0] >= MIN_INTERVAL_WIDTH:
-                flash_intervals.append(tuple(current_interval))
+            flash_intervals.append(tuple(current_interval))
             current_interval = None
     
     # Update previous brightness
@@ -68,8 +56,8 @@ def process_video(video_path):
     
     cap.release()
     
-    # Append last interval if it wasn't closed and meets the minimum width
-    if current_interval is not None and current_interval[1] - current_interval[0] >= MIN_INTERVAL_WIDTH:
+    # Append last interval if it wasn't closed
+    if current_interval is not None:
         flash_intervals.append(tuple(current_interval))
     
     print("Processing complete.")
