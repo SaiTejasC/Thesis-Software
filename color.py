@@ -11,4 +11,9 @@ def detect_red(image):
     mask1 = cv.inRange(hsvImage, lower1 ,upper1)
     mask2 = cv.inRange(hsvImage, lower2 ,upper2)
     mask = mask1 + mask2
-    return mask
+
+    white_pixels = np.sum(mask == 255)
+    black_pixels = np.sum(mask == 0)
+    red_percentage = white_pixels/(white_pixels + black_pixels)
+    trigger = red_percentage > 0.2
+    return trigger, mask
