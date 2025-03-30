@@ -97,6 +97,7 @@ def process_video(video_path):
             print(f"  Frequency: {len(cluster_flashes)/(end-start):.2f}Hz")
     else:
         print(f"No clusters with ≥{MIN_FLASHES} flashes in {DETECTION_WINDOW} seconds detected.")
+    return flash_clusters
 
 if __name__ == "__main__":
     process_video(VIDEO_PATH)
