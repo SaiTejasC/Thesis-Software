@@ -1,103 +1,72 @@
 import cv2
 import numpy as np
+from luminance import bgr_to_luminance  # Ensure the specific function is imported
 
 # Constants
-VIDEO_PATH = "youtube_CKa2HGuCNdE_852x480_h264.mp4"
-FLASH_THRESHOLD = 220                # Brightness threshold for a flash
-BRIGHTNESS_DIFF_THRESHOLD = 50       # Sensitivity to brightness changes
-MIN_FLASHES = 3                      # Need at least 3 flashes
-DETECTION_WINDOW = 1.3               # Increased from 1.0 to 1.5 seconds
-MIN_DARK_DURATION = 0.1              # Minimum dark period between flashes (seconds)
+VIDEO_PATH = "youtube_pokemon.mp4"  # Change this to your video file
+FLASH_THRESHOLD = 220  # Adjust as needed
+LUMINANCE_DIFF_THRESHOLD = 50  # Adjust sensitivity
+MIN_FREQUENCY = 3 # Min frequency of flashes per second
 
 # Initialize variables
-prev_brightness = None
-flash_timestamps = []                # Stores timestamps of valid flashes
-in_flash = False
-flash_start_time = None
+prev_luminance = None  # Initialize prev_luminance
+flash_timestamps = []
 
 def detect_flash(frame, timestamp):
-    global prev_brightness, in_flash, flash_start_time, flash_timestamps
+    global prev_luminance, flash_timestamps
+    pixels = frame.reshape(-1, 3)
+    current_luminance = bgr_to_luminance(np.array(pixels))
+    if prev_luminance is not None:
+        luminance_diff = np.mean(np.abs(current_luminance - prev_luminance) > LUMINANCE_DIFF_THRESHOLD)
+    else:
+        luminance_diff = 0
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    current_brightness = np.mean(gray)
+    if luminance_diff > 0.5:
+        flash_timestamps.append(timestamp)
 
-    # Flash STARTS when brightness crosses threshold
-    if not in_flash and current_brightness > FLASH_THRESHOLD:
-        in_flash = True
-        flash_start_time = timestamp
-
-    # Flash ENDS when brightness drops below threshold
-    elif in_flash and current_brightness <= FLASH_THRESHOLD:
-        in_flash = False
-        # Only register if there was a minimum dark period before this flash
-        if flash_timestamps and (timestamp - flash_timestamps[-1]) < MIN_DARK_DURATION:
-            return  # Ignore too-close flashes
-        flash_timestamps.append(flash_start_time)
-
-    prev_brightness = current_brightness
-
-def find_flash_clusters(flash_timestamps):
-    clusters = []
-    current_cluster = []
-    
-    for timestamp in flash_timestamps:
-        if not current_cluster:
-            current_cluster.append(timestamp)
-            continue
-        
-        # Key Change: 1.5-second window check (was 1.0)
-        if timestamp - current_cluster[0] <= DETECTION_WINDOW:
-            current_cluster.append(timestamp)
-        else:
-            # Save cluster if it has enough flashes
-            if len(current_cluster) >= MIN_FLASHES:
-                clusters.append((current_cluster[0], current_cluster[-1]))
-            # Start new cluster
-            current_cluster = [timestamp]
-    
-    # Add the last cluster if valid
-    if len(current_cluster) >= MIN_FLASHES:
-        clusters.append((current_cluster[0], current_cluster[-1]))
-    
-    return clusters
+    prev_luminance = current_luminance
 
 def process_video(video_path):
     cap = cv2.VideoCapture(video_path)
+    
     if not cap.isOpened():
         print("Error: Could not open video.")
         return
     
-    fps = cap.get(cv2.CAP_PROP_FPS)
+    fps = cap.get(cv2.CAP_PROP_FPS)  # Get frames per second
     frame_count = 0
-    
+    video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-        
-        timestamp = frame_count / fps
+        timestamp = frame_count / fps  # Calculate timestamp in seconds
+        # print(f"frame {frame_count}/{video_length} ({timestamp:.2f}s)")
         detect_flash(frame, timestamp)
         frame_count += 1
     
     cap.release()
-    
-    # Find flash clusters
-    flash_clusters = find_flash_clusters(flash_timestamps)
-    
-    # Print results
-    print(f"Total flashes detected: {len(flash_timestamps)}")
-    print(f"Flash timestamps: {[f'{t:.2f}' for t in flash_timestamps]}")
-    
-    if flash_clusters:
-        print(f"\nDetected {len(flash_clusters)} valid flash clusters (≥{MIN_FLASHES} flashes in {DETECTION_WINDOW} seconds):")
-        for i, (start, end) in enumerate(flash_clusters, 1):
-            cluster_flashes = [t for t in flash_timestamps if start <= t <= end]
-            print(f"Cluster {i}: {start:.2f}s to {end:.2f}s")
-            print(f"  Flashes: {len(cluster_flashes)} at {[f'{t:.2f}' for t in cluster_flashes]}")
-            print(f"  Frequency: {len(cluster_flashes)/(end-start):.2f}Hz")
-    else:
-        print(f"No clusters with ≥{MIN_FLASHES} flashes in {DETECTION_WINDOW} seconds detected.")
-    return flash_clusters
+    # Calculate ranges with at least 3 flashes in a second
+    flash_ranges = []
+    if flash_timestamps:
+        count = 1
+        # start at a frame, go through all frames within a second. if theres atleast MIN_FREQUENCY flashes, add to flash_ranges
+        # then move on to the next frame
+        for i in range(0, len(flash_timestamps)):
+            #starting frame
+            start = flash_timestamps[i]
+            # go through all frames within 1 second of "start"
+            for j in range(i + 1, len(flash_timestamps)):
+                # Check if the next timestamp is within 1 second of the start timestamp
+                if flash_timestamps[j] - start <= 1:
+                    count += 1
+                else:
+                    break
+            if count >= MIN_FREQUENCY:
+                flash_ranges.append((start, flash_timestamps[j - 1]))
 
+    print(f"Flash ranges with at least {MIN_FREQUENCY} flashes in a second:", flash_ranges)
+    return flash_ranges
+    
 if __name__ == "__main__":
     process_video(VIDEO_PATH)
