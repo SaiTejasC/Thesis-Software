@@ -3,7 +3,7 @@ import numpy as np
 
 MAX_LUMINANCE = 200
 
-def bgr_to_luminance(bgr: tuple[int, int, int]):
+def bgr_to_luminance(bgr):
     def convert(val: int):
         normalized = val / 255
         return ((normalized + 0.055) / 1.055) ** 2.4 if normalized > 0.04045 else normalized / 12.92
