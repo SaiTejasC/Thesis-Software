@@ -38,7 +38,7 @@ def patten_comparision(prevImage, currImage):
     patternChange = prevPatternInCurrPattern/prevPatternPixels
     #if patternChange is above a certain threshhold, that means the patterns moved alot and this a trigger.
     # if it = 0, that means the patterns have not moved, hence no trigger
-    return patternChange > 0.5 #0.5 can be changed, just a placeholder
+    return patternChange < 0.5 #0.5 can be changed, just a placeholder
 
 
 
