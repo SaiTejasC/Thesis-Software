@@ -73,9 +73,19 @@ def process_video(video_path):
                     break
             if count >= MIN_FREQUENCY:
                 flash_ranges.append((start, flash_timestamps[j - 1]))
+        
+        final_ranges = []
+        #merge overlapping ranges
+        for start, end in flash_ranges:
+            # if current range does not overlap with prev range, then add it
+            if not final_ranges or final_ranges[-1][1] < start:
+                final_ranges.append((start, end))
+            else:
+                #if current range does overlap with prev range, then change the prev end to current end
+                final_ranges[-1] = (final_ranges[-1][0], max(final_ranges[-1][1], end))
 
-    print(f"Flash ranges with at least {MIN_FREQUENCY} flashes in a second:", flash_ranges)
-    return flash_ranges
+    print(f"Flash ranges with at least {MIN_FREQUENCY} flashes in a second:", final_ranges)
+    return final_ranges
     
 if __name__ == "__main__":
     process_video(VIDEO_PATH)
