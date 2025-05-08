@@ -5,7 +5,7 @@ from luminance import bgr_to_luminance  # Ensure the specific function is import
 # Constants
 VIDEO_PATH = "youtube_pokemon.mp4"  # Change this to your video file
 FLASH_THRESHOLD = 220  # Adjust as needed
-LUMINANCE_DIFF_THRESHOLD = 50  # Adjust sensitivity
+LUMINANCE_DIFF_THRESHOLD = 20  # Adjust sensitivity
 MIN_FREQUENCY = 3 # Min frequency of flashes per second
 
 # Initialize variables
@@ -33,7 +33,7 @@ def detect_flash2(currentFrame, prevFrame):
     prev_luminance = prevFrame.reshape(-1, 3)
     prev_luminance = bgr_to_luminance(np.array(prev_luminance))
     luminance_diff = np.mean(np.abs(current_luminance - prev_luminance) > LUMINANCE_DIFF_THRESHOLD)
-    return luminance_diff > 0.3
+    return luminance_diff > 0.5
 
 def process_video(video_path):
     cap = cv2.VideoCapture(video_path)
