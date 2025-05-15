@@ -3,7 +3,7 @@ from color import *
 from flashes import *
 
 #cam = cv2.VideoCapture(0)
-INPUT_PATH = "youtube_CKa2HGuCNdE_852x480_h264.mp4"
+INPUT_PATH = "youtube_pokemon.mp4"
 OUTPUT_PATH = "OUTPUT_" + INPUT_PATH
 
 cap = cv2.VideoCapture(INPUT_PATH)
