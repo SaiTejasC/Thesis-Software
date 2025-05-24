@@ -84,7 +84,7 @@ def process_video(video_path):
                 #if current range does overlap with prev range, then change the prev end to current end
                 final_ranges[-1] = (final_ranges[-1][0], max(final_ranges[-1][1], end))
 
-    print(f"Flash ranges with at least {MIN_FREQUENCY} flashes in a second:", flash_timestamps)
+    print(f"Flash ranges with at least {MIN_FREQUENCY} flashes in a second:", final_ranges)
     return final_ranges
     
 if __name__ == "__main__":
